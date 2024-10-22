@@ -35,4 +35,3 @@ go build hcptfestimate.go
 
 Update your `PATH` to allow calling the binary from any path (use your prefered method: bashrc, zshrc, /usr/loca/bin...), and you're good to go.
 
- * Dockerfile **MUST** be put under `build` directory even if you have only one Dockerfile.
