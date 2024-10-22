@@ -6,6 +6,7 @@ import (
     "encoding/json"
     "io/ioutil"
     "os"
+//    "flag"
 )
 
 type Resource struct {
@@ -13,7 +14,7 @@ type Resource struct {
   Type string `json:"type"`
   Name string `json:"name"`
   Provider string `json:"provider"`
-  Instance []interface{} `json:"instances"`
+  Instances []interface{} `json:"instances"`
 }
 
 type Workspace struct {
@@ -36,16 +37,32 @@ func countFilteredResources(jsonData []byte) int {
 
 	var count int
 	for _, resource := range workspace.Resources {
-		if resource.Mode == "managed" && resource.Type != "null_resource" {
-			count++
+    if resource.Mode == "managed" && resource.Type != "null_resource" && resource.Type != "terraform_data" {
+      for _, _ = range resource.Instances {
+        count++
+      }
 		}
 	}
 	return count
 }
 
 func main() {
-//  jsonState, err := os.Open("./backupstate.json")
-  jsonState, err := os.Open(os.Args[1]  )
+  // Define ANSI color codes
+  const (
+    Red    = "\033[31m"
+    Green  = "\033[32m"
+    Yellow = "\033[33m"
+    Blue   = "\033[34m"
+    Reset  = "\033[0m" // Reset to default color
+  )
+
+  // Check the number of arguments
+  if len(os.Args) != 2 {
+    fmt.Println("\nError:\nhcptfestimate require to pass the location of the state file as argument.\nExample: hcptfestimate ./terraform.tfstate\n")
+      os.Exit(1)
+  }
+
+  jsonState, err := os.Open(os.Args[1])
   if err != nil {
     panic(err)
   }
@@ -59,66 +76,19 @@ func main() {
 
   var count int = countFilteredResources(state)
   var hourlyrate float64 = 0.00014
-  var monthlyprice float64 = float64(count) * float64(730) * hourlyrate
-  fmt.Println("Resources managed in this workspace:", count, "\nPrice per month in HCP: $", monthlyprice)
+  var monthlyprice float64 = float64(count - 500) * float64(730) * hourlyrate
+  fmt.Println(Green + "\n### HCP Terraform cost estimation for the provided state file: ###" + Reset +"\n(hcptfestimate is freely provided by Ryzhom SAS.)")
+  fmt.Println("\n# Pricing for Standard Tier: #")
 
+  if count < 500 {
+    fmt.Println("Resources managed in this workspace:", Yellow , count, Reset)
+    fmt.Println("Price per month in HCP:", Yellow +"$0", Reset)
+    fmt.Println("(First 500 managed resources are free.)\n")
+  }
+
+  if count > 500 {
+    fmt.Println("Resources managed in this workspace:", Yellow , count, Reset)
+    fmt.Println("Price per month in HCP:", Yellow +"$", monthlyprice, Reset)
+    fmt.Println("(First 500 managed resources are free.)\n")
+  }
 }
-
-
-
-//Counting Filtered JSON Objects
-//To count filtered objects in JSON with Go, you can use the encoding/json package to unmarshal the JSON data into a Go struct, and then use a loop to iterate over the objects and count the ones that match your filter criteria.
-//
-//Here’s an example:
-//
-//package main
-//
-//import (
-//	"encoding/json"
-//	"fmt"
-//)
-//
-//type Bird struct {
-//	ID    int    `json:"Id"`
-//	Location string `json:"Location"`
-//	Content string `json:"Content"`
-//}
-//
-//func countFilteredBirds(jsonData []byte, location string) int {
-//	var birds []Bird
-//	err := json.Unmarshal(jsonData, &birds)
-//	if err != nil {
-//		fmt.Println(err)
-//		return 0
-//	}
-//
-//	var count int
-//	for _, bird := range birds {
-//		if bird.Location == location {
-//			count++
-//		}
-//	}
-//	return count
-//}
-//
-//func main() {
-//	jsonData := []byte(`[
-//		{"Id": 13, "Location": "Australia", "Content": "Another string"},
-//		{"Id": 145, "Location": "England", "Content": "SomeString"},
-//		{"Id": 12, "Location": "England", "Content": "SomeString"},
-//		{"Id": 12331, "Location": "Sweden", "Content": "SomeString"},
-//		{"Id": 213123, "Location": "England", "Content": "SomeString"}
-//	]`)
-//
-//	location := "England"
-//	count := countFilteredBirds(jsonData, location)
-//	fmt.Println("Count of birds in", location, ":", count)
-//}
-//
-//In this example, we define a Bird struct to represent the JSON objects, and a countFilteredBirds function that takes a JSON byte slice and a location string as input. The function unmarshals the JSON data into a slice of Bird structs, and then iterates over the slice to count the number of birds that match the specified location.
-//
-//In the main function, we define the JSON data as a byte slice, and call the countFilteredBirds function with the desired location (“England”). The output will be the count of birds in England.
-//
-//Note that this example assumes that the JSON data is an array of objects, where each object represents a bird. If your JSON data has a different structure, you may need to modify the code accordingly.
-//
-//Also, if you’re working with a large JSON dataset, you may want to consider using a more efficient approach, such as using a JSON parsing library like jsoniter or gonum, or using a database to store and query the data.
