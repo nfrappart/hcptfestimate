@@ -33,5 +33,7 @@ go build hcptfestimate.go
 
 ```
 
-Update your `PATH` to allow calling the binary from any path (use your prefered method: bashrc, zshrc, /usr/loca/bin...), and you're good to go.
+Update your `PATH` to allow calling the binary from any path (use your prefered method: bashrc, zshrc, /usr/local/bin... whatever your flavour), and you're good to go.
 
+> [!NOTE]
+> The above Getting Started is for Unix-like terminal for linux or OSX users, but the go tooling is availble for powershell through chocolatey afaik.
